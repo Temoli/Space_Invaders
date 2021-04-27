@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <Gamebuino.h>
 Gamebuino gb;
+//sorry for all of this
 //84x48  resolution
 
 #define TEST 1
@@ -48,6 +49,10 @@ const int SHIP_Y = LCDHEIGHT - 3;
 
 int alien_v = 1;
 
+const int LEFT = 1; //alien movement
+const int RIGHT = 2;
+int direction = RIGHT;
+
 bool aliens[3][8];
 int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
 const int aliens_Y[3] = {1, 10, 19};
@@ -76,16 +81,19 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	}
 
 	//LOGIC
-	if (*aliens_X < 12){
-		for (int i = 0; i < 8; i++){
-			*(aliens_X + i) += alien_v;
+	switch(direction){ //move alients left/right
+		case LEFT:
+			for (int i = 0; i < 8; i++)
+				*(aliens_X + i) += alien_v;
+			if (*aliens_X > 11) direction = RIGHT;
+			break;
+		case RIGHT:
+			for (int i = 0; i < 8; i++)
+				*(aliens_X + i) -= alien_v;
+			if(*aliens_X < 1) direction = LEFT;
 		}
-	} else if(*aliens_X > 0){
-		for (int i = 0; i < 8; i++){
-			*(aliens_X + i) -= alien_v;
-		}
-	}
-
+	} //move aliens END
+			
 	//DRAW
 	gb.display.clear();
 	gb.display.drawBitmap(ship_x, SHIP_Y, ship);

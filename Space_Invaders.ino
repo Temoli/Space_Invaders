@@ -117,4 +117,4 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	} //Draw aliens END
 													
 }
-}
+

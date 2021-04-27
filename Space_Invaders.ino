@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <Gamebuino.h>
 Gamebuino gb;
-//sorry for all of this
+//I'm really sorry for this pointers I know what I have done ... but I wanted to play with them a bit ... at least it's faster :d
 //84x48  resolution
 
 #define TEST 1
@@ -54,19 +54,21 @@ const int RIGHT = 2;
 int direction = RIGHT;
 
 bool aliens[3][8];
-int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
+int aliens_X[7] = {0, 9, 18, 27, 36, 45, 54};
+// int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
 const int aliens_Y[3] = {1, 10, 19};
+
+int bullet_v = 1;
+int bullets[20][20];
 
 void setup(){
 	gb.begin();
 	gb.titleScreen(F("Space_Invaders"));
 	gb.display.persistence = false;
-	
-	for (int i = 0; i < 3; i++){ //setup 3 rows of aliens ready for invasion
-		for (int j = 0; j < 8; j++){
-			aliens[i][j] = true;
-		}
-	}
+
+	for(int i = 0; i < 3; i++)
+		for(int j = 0; j < 7; j++)
+			*(*(aliens + i) + j) = true;
 }
 
 void loop(){
@@ -74,32 +76,58 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	//INPUT
 	if(gb.buttons.repeat(BTN_C, 0)) gb.titleScreen(F("Space Invaders"));
 
-	if(gb.buttons.repeat(BTN_LEFT, 0)){ //move ship
+	if(gb.buttons.repeat(BTN_LEFT, 0) && ship_x > 0){ //move ship
 		ship_x -= ship_v;
-	}else if(gb.buttons.repeat(BTN_RIGHT, 0)){
+	}else if(gb.buttons.repeat(BTN_RIGHT, 0) && ship_x < LCDWIDTH - 5){ //LCDWIDTH - ship width
 		ship_x += ship_v;
+	}
+
+	if(gb.buttons.pressed(BTN_A)){ // create bullet start coords
+		for (int i = 0; i < 20; i++){
+			if (*(*(bullets + i)) == 0){
+				*(*(bullets + i)) = ship_x + 3;
+				*(*(bullets + i) + 1) = LCDHEIGHT - 2;
+				break;
+			}
+		}
 	}
 
 	//LOGIC
 	switch(direction){ //move alients left/right
 		case LEFT:
-			for (int i = 0; i < 8; i++)
+			for (int i = 0; i < 7; i++)
 				*(aliens_X + i) += alien_v;
-			if (*aliens_X > 11) direction = RIGHT;
+			if (*aliens_X > 21) direction = RIGHT;
 			break;
 		case RIGHT:
-			for (int i = 0; i < 8; i++)
+			for (int i = 0; i < 7; i++)
 				*(aliens_X + i) -= alien_v;
 			if(*aliens_X < 1) direction = LEFT;
+			break;
 		}
 	} //move aliens END
+
+	for (int i = 0; i < 20; i++){ //move bullets up and/or delete bullet
+		if ( *(*(bullets + i)) != 0) //move
+			*(*(bullets + i) + 1) -= bullet_v;
+
+		if ( *(*(bullets + i) + 1) < -2){ //delete
+			*(*(bullets + i)) = 0;
+			*(*(bullets + i) + 1) = 0;
+		}
+	}
 			
 	//DRAW
 	gb.display.clear();
 	gb.display.drawBitmap(ship_x, SHIP_Y, ship);
-	
+	for (int i = 0; i < 20; i++){
+		if (*(*(bullets + i)) != 0) 
+			gb.display.fillRect( *(*(bullets + i)), *(*(bullets + i) + 1), 2, 3);
+			// gb.display.drawFastVLine( *(*(bullets + i)), *(*(bullets + i) + 1), 3);
+	}
+
 	for (int i = 0; i < 3; i++){ //Draw aliens
-		for (int j = 0; j < 8; j++){
+		for (int j = 0; j < 7; j++){
 			if( *(*(aliens + i)+j)){
 				switch (i){
 					case 0:
@@ -117,4 +145,3 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	} //Draw aliens END
 													
 }
-

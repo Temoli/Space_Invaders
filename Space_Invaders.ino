@@ -30,7 +30,7 @@ const int LEFT = 1; //alien movement
 const int RIGHT = 2;
 int direction = RIGHT;
 
-int aliens_amount = 7;
+const int aliens_amount = 7;
 int aliens_x[aliens_amount];
 //int aliens_x[7] = {0, 9, 18, 27, 36, 45, 54};
 // int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
@@ -71,8 +71,8 @@ B11111111,
 };
 
 int bullet_v = 1;
-int bullets_amount = 10;
-int bullets[bullets_amount][bullets_amount];
+const int bullets_amount = 10;
+int bullets[bullets_amount][2];
 
 void setup(){
 	gb.begin();
@@ -113,7 +113,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 		case LEFT:
 			for (int i = 0; i < aliens_amount; i++)
 				*(aliens_x + i) += alien_v; //move aliens
-			if (*aliens_x >= (LCDWIDTH - (aliens_amount * (alien_w + 1) - 1)) direction = RIGHT; //change aliens direction //to do: make 21 a variable easy to change. it should depends on aliens_amount
+			if (*aliens_x >= (LCDWIDTH - (aliens_amount * (alien_w + 1) - 1))) direction = RIGHT; //change aliens direction //to do: make 21 a variable easy to change. it should depends on aliens_amount
 			break;
 		case RIGHT:
 			for (int i = 0; i < aliens_amount; i++)

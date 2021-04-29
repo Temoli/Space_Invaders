@@ -21,6 +21,7 @@ B11111000,
 
 //ALIENS SETTIGNS
 int alien_w = 8;
+int alien_h = 8;
 int alien_1_h = 8;
 int alien_2_h = 8;
 int alien_3_h = 8;
@@ -30,7 +31,8 @@ const int LEFT = 1; //alien movement
 const int RIGHT = 2;
 int direction = RIGHT;
 
-int aliens_amount = 7;
+const int aliens_amount = 7;
+int aliens_left = aliens_amount;
 int aliens_x[aliens_amount];
 //int aliens_x[7] = {0, 9, 18, 27, 36, 45, 54};
 // int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
@@ -70,16 +72,17 @@ B11111111,
 B11111111,
 };
 
-int bullet_v = 1;
-int bullets_amount = 10;
-int bullets[bullets_amount][bullets_amount];
+//BULLET SETTINGS
+const int bullet_v = 1;
+const int bullets_amount = 10;
+int bullets[bullets_amount][2]; //it was int bullets[bullets_amount][bullets_amount]; check if some loop doesn't make loop out of table (maybe loop will work on 10 elements but now Y is set to 2
 
 void setup(){
 	gb.begin();
 	gb.titleScreen(F("Space_Invaders"));
 	gb.display.persistence = false;
 
-	for(int i = 0; i < aliens_rows; i++) //set up 3 rows of aliens
+	for(int i = 0; i < aliens_rows; i++) //set up 3 rows of aliens; it will be true if alien exist or fale if alien is dead
 		for(int j = 0; j < aliens_amount; j++)
 			*(*(aliens + i) + j) = true;
 	
@@ -92,12 +95,14 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	//INPUT
 	if(gb.buttons.repeat(BTN_C, 0)) gb.titleScreen(F("Space Invaders"));
 
+	//move left/right
 	if(gb.buttons.repeat(BTN_LEFT, 0) && ship_x > 0){ //move ship
 		ship_x -= ship_v;
 	}else if(gb.buttons.repeat(BTN_RIGHT, 0) && ship_x < LCDWIDTH - ship_w){
 		ship_x += ship_v;
 	}
 
+	//fire
 	if(gb.buttons.pressed(BTN_A)){ // create bullet start coords
 		for (int i = 0; i < bullets_amount; i++){
 			if (*(*(bullets + i)) == 0){
@@ -109,30 +114,67 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	}
 
 	//LOGIC
-	switch(direction){ //move alients left/right
+	//move aliens left/right
+	switch(direction){
 		case LEFT:
 			for (int i = 0; i < aliens_amount; i++)
 				*(aliens_x + i) += alien_v; //move aliens
-			if (*aliens_x >= (LCDWIDTH - (aliens_amount * (alien_w + 1) - 1)) direction = RIGHT; //change aliens direction //to do: make 21 a variable easy to change. it should depends on aliens_amount
+			if (*aliens_x >= (LCDWIDTH - (aliens_amount * (alien_w + 1) - 1))  //change aliens direction //to do: make 21 a variable easy to change. it should depends on aliens_amount
+					direction = RIGHT;
 			break;
 		case RIGHT:
 			for (int i = 0; i < aliens_amount; i++)
 				*(aliens_x + i) -= alien_v;
-			if(*aliens_x < 1) direction = LEFT;
+			if(*aliens_x < 1)
+					direction = LEFT;
 			break;
 		}
 	} //move aliens END
 
-	for (int i = 0; i < bullets_amount; i++){ //move bullets up and/or delete bullet
+	//move bullets up and/or delete bullet
+	for (int i = 0; i < bullets_amount; i++){
 		if ( *(*(bullets + i)) != 0) //move			//to do: check if  !=0 isn't wrong
 			*(*(bullets + i) + 1) -= bullet_v;
 
-		if ( *(*(bullets + i) + 1) < -2){ //delete
+		if ( *(*(bullets + i) + 1) < -2){ //delete bullet (it's off the screen)
 			*(*(bullets + i)) = 0;
 			*(*(bullets + i) + 1) = 0;
 		}
 	}
+
 			
+	//collision bullet - alien
+	for (int b = 0; b < bullets_amount; b++){
+		for (int i = 0; i < aliens_rows; i++){
+			for (int j = 0; i < aliens_amount; j++){
+				if (aliens[i][j] == true) && gb.collideRectRect( *(aliens_x + j), *(aliens_y + i), alien_w, alien_h, *(*(bullet + b)), *(*(bullet +b) + 1), 2, 3){
+					aliens[i][j] = false;
+					aliens_left -= 1;
+				}
+			}
+		}
+	}
+					
+	//check if win if so go to title screen and reset some values
+	if (aliens-left == 0){
+		delay(3000); //wait 3 seconds to give some time to see what happened and then reset game
+		gb.titleScreen(F("Space Invaders"));
+		int ship_x = 38;
+		int direction = RIGHT;
+		int aliens_left = aliens_amount;
+		
+		for(int i = 0; i < aliens_rows; i++) //set up 3 rows of aliens
+			for(int j = 0; j < aliens_amount; j++)
+				*(*(aliens + i) + j) = true;
+	
+		for (int i = 0; i < aliens_amount; i++) //set up aliens starting x position if alien_w = 8 -> 0, 9, 18, 27
+			*(aliens_x + i) = i * (alien_w + 1); //alien 1 aka 0 =0*(8+1) = 0;  alien 3 aka 4 = 3*(8+1) = 27
+		
+		for (int i = 0; i < bullets_amount; i++) //reset bullets coords
+			for int j = 0; j < 2; j++)
+				*(*(bullets + i) + j) = 0;
+	}
+
 	//DRAW
 	gb.display.clear();
 	gb.display.drawBitmap(ship_x, SHIP_y, ship);
@@ -158,5 +200,5 @@ while (gb.update()){ //returns true every 50ms; 20fps
 			}											
 		}
 	} //Draw aliens END
-													
-}
+} //void loop() END
+} //gb.update END

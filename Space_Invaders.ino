@@ -119,7 +119,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 		case LEFT:
 			for (int i = 0; i < aliens_amount; i++)
 				*(aliens_x + i) += alien_v; //move aliens
-			if (*aliens_x >= (LCDWIDTH - (aliens_amount * (alien_w + 1) - 1))  //change aliens direction //to do: make 21 a variable easy to change. it should depends on aliens_amount
+			if (*aliens_x >= (LCDWIDTH - (aliens_amount * (alien_w + 1) - 1)))  //change aliens direction //to do: make 21 a variable easy to change. it should depends on aliens_amount
 					direction = RIGHT;
 			break;
 		case RIGHT:
@@ -147,7 +147,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	for (int b = 0; b < bullets_amount; b++){
 		for (int i = 0; i < aliens_rows; i++){
 			for (int j = 0; i < aliens_amount; j++){
-				if (aliens[i][j] == true) && gb.collideRectRect( *(aliens_x + j), *(aliens_y + i), alien_w, alien_h, *(*(bullet + b)), *(*(bullet +b) + 1), 2, 3){
+				if (aliens[i][j] == true && gb.collideRectRect( *(aliens_x + j), *(aliens_y + i), alien_w, alien_h, *(*(bullets + b)), *(*(bullets + b) + 1), 2, 3)){
 					aliens[i][j] = false;
 					aliens_left -= 1;
 				}
@@ -156,7 +156,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	}
 					
 	//check if win if so go to title screen and reset some values
-	if (aliens-left == 0){
+	if (aliens_left == 0){
 		delay(3000); //wait 3 seconds to give some time to see what happened and then reset game
 		gb.titleScreen(F("Space Invaders"));
 		int ship_x = 38;
@@ -171,7 +171,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 			*(aliens_x + i) = i * (alien_w + 1); //alien 1 aka 0 =0*(8+1) = 0;  alien 3 aka 4 = 3*(8+1) = 27
 		
 		for (int i = 0; i < bullets_amount; i++) //reset bullets coords
-			for int j = 0; j < 2; j++)
+			for (int j = 0; j < 2; j++)
 				*(*(bullets + i) + j) = 0;
 	}
 
@@ -201,4 +201,3 @@ while (gb.update()){ //returns true every 50ms; 20fps
 		}
 	} //Draw aliens END
 } //void loop() END
-} //gb.update END

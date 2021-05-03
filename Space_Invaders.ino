@@ -4,7 +4,6 @@ Gamebuino gb;
 //I'm really sorry for this pointers, I know what I have created ... but I wanted to play with them a bit ... at least it's faster :d
 //84x48  resolution
 
-#define TEST 1
 //SHIP SETTIGNS
 const int SHIP_W = 5;
 const int SHIP_H = 3;
@@ -12,6 +11,7 @@ const int SHIP_V = 1;
 
 int ship_x = 38;
 const int SHIP_y = LCDHEIGHT - 3;
+int lifes = 3;
 
 const byte ship[] PROGMEM = {8, 3,
 B00100000,
@@ -33,7 +33,6 @@ int direction = RIGHT;
 
 const int ALIENS_AMOUNT = 7;
 int aliens_x[ALIENS_AMOUNT];
-//int aliens_x[7] = {0, 9, 18, 27, 36, 45, 54};
 // int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
 const int ALIENS_ROWS = 3;
 const int ALIENS_Y[3] = {1, 10, 19};
@@ -42,34 +41,34 @@ int aliens_left = ALIENS_AMOUNT * ALIENS_ROWS;
 
 const byte ALIEN_1[] PROGMEM = {
 8, 8,
+B00011000,
+B10111101,
 B11111111,
-B10010001,
-B10010001,
-B10010001,
-B10010001,
-B10010001,
-B10010001,
 B11111111,
+B10011001,
+B00011000,
+B00111100,
+B00011000,
 };
 const byte ALIEN_2[] PROGMEM = {8, 8,
+B00011000,
+B11011011,
+B10011001,
+B10111101,
 B11111111,
-B11111111,
-B10000101,
-B10001001,
-B10010001,
-B10100001,
-B11111111,
-B11111111,
+B00111100,
+B00111100,
+B00011000,
 };
 const byte ALIEN_3[] PROGMEM = {8, 8,
+B00111100,
+B01111110,
 B11111111,
-B11111111,
-B10000011,
-B10011111,
-B10000011,
-B10000011,
-B11111111,
-B11111111,
+B01111110,
+B00111100,
+B00111100,
+B00011000,
+B00011000,
 };
 
 //BULLET SETTINGS
@@ -77,6 +76,14 @@ const int BULLET_V = 2;
 const int BULLETS_AMOUNT = 15;
 int bullets[BULLETS_AMOUNT][2]; //it was int bullets[BULLETS_AMOUNT][BULLETS_AMOUNT]; check if some loop doesn't make loop out of table (maybe loop will work on 10 elements but now Y is set to 2
 const int RESET_BULLET = -7;
+
+int alien_fire = -7;
+int alien_bullets[10][2];
+
+int x_correction_l = 0;
+int correction_l_count = 0;
+int x_correction_r = 0;
+int correction_r_count = 0;
 
 void setup(){
 	gb.begin();
@@ -116,13 +123,19 @@ while (gb.update()){ //returns true every 50ms; 20fps
 			}
 
 	//LOGIC
-					
-	//check if win if so go to title screen and reset some values
-	if (aliens_left <= 0){
+
+	//WON / LOST check if win if so go to title screen and reset some values
+	if (aliens_left <= 0 || lifes <= 0){
 		delay(2000); //wait 3 seconds to give some time to see what happened and then reset game
 		ship_x = 38;
+		lifes = 0;
 		direction = RIGHT;
 		aliens_left = ALIENS_AMOUNT * ALIENS_ROWS;
+
+		x_correction_l = 0;
+		correction_l_count = 0;
+		x_correction_r = 0;
+		correction_r_count = 0;
 
 		for(int i = 0; i < ALIENS_ROWS; i++) //set up 3 rows of aliens; it will be true if alien exist or fale if alien is dead
 			for(int j = 0; j < ALIENS_AMOUNT; j++)
@@ -138,22 +151,34 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	}
 
 	//move aliens left/right
+		//section 1 - if first or last coumn of aliens is destroyed this will add correction to aliens movement to move aliens formation to the edge of the screen	
+	if ( *(*(aliens) + correction_l_count) == false && *(*(aliens + 1) + correction_l_count) == false && *(*(aliens + 2) + correction_l_count) == false){
+		x_correction_l = (correction_l_count + 1) * (alien_w + 1);
+		correction_l_count += 1;
+	}
+
+	if ( *(*(aliens) + (ALIENS_AMOUNT - 1) - correction_r_count) == false && *(*(aliens + 1) + (ALIENS_AMOUNT - 1) - correction_r_count) == false && *(*(aliens + 2) + (ALIENS_AMOUNT - 1) - correction_r_count) == false){
+		x_correction_r = (correction_r_count + 1) * (alien_w + 1);
+		correction_r_count += 1;
+	}
+		//section 2 - alien movement; just move aliens left - right
 	switch(direction){
-		case LEFT:
-			for (int i = 0; i < ALIENS_AMOUNT; i++)
-				*(aliens_x + i) += alien_v; //move aliens
-			if (*aliens_x >= (LCDWIDTH - (ALIENS_AMOUNT * (alien_w + 1) - 1)))  //change aliens direction //to do: make 21 a variable easy to change. it should depends on ALIENS_AMOUNT
-					direction = RIGHT;
-			break;
 		case RIGHT:
 			for (int i = 0; i < ALIENS_AMOUNT; i++)
-				*(aliens_x + i) -= alien_v;
-			if(*aliens_x < 1)
+				*(aliens_x + i) += alien_v; //move aliens
+			if (*aliens_x >= (LCDWIDTH - (ALIENS_AMOUNT * (alien_w + 1) - 1)) + x_correction_r)  //change aliens direction //to do: make 21 a variable easy to change. it should depends on ALIENS_AMOUNT
 					direction = LEFT;
 			break;
-	} //move aliens END
+		case LEFT:
+			for (int i = 0; i < ALIENS_AMOUNT; i++)
+				*(aliens_x + i) -= alien_v;
+			if(*aliens_x < 1 - x_correction_l)
+					direction = RIGHT;
+			break;
+	}
+	//move aliens END
 
-	//move bullets up and/or delete bullet
+	//move ship bullets up and/or delete bullet
 	for (int i = 0; i < BULLETS_AMOUNT; i++){
 		if ( *(*(bullets + i)) != RESET_BULLET) //move			//to do: check if  !=0 isn't wrong
 			*(*(bullets + i) + 1) -= BULLET_V;
@@ -163,8 +188,14 @@ while (gb.update()){ //returns true every 50ms; 20fps
 			*(*(bullets + i) + 1) = RESET_BULLET;
 		}
 	}
-			
-	// //collision bullet - alien
+	//alien shoot
+	if ( *(*(alien_bullets)) >= LCDHEIGHT) *(*(alien_bullets)) = RESET_BULLET
+		
+
+	//collision bullet - ship
+		
+
+	//collision bullet - alien
 	for (int i = 0; i < ALIENS_ROWS; i++){
 		for (int j = 0; j < ALIENS_AMOUNT; j++){
 			for (int b = 0; b < BULLETS_AMOUNT; b++){

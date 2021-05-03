@@ -189,7 +189,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 		}
 	}
 	//alien shoot
-	if ( *(*(alien_bullets)) >= LCDHEIGHT) *(*(alien_bullets)) = RESET_BULLET
+	//if ( *(*(alien_bullets)) >= LCDHEIGHT) *(*(alien_bullets)) = RESET_BULLET
 		
 
 	//collision bullet - ship

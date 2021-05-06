@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <Gamebuino.h>
 Gamebuino gb;
-//I'm really sorry for this pointers, I know what I have created ... but I wanted to play with them a bit ... at least it's faster :d
+//I'm really sorry for this pointers, I know what I have created ... but I wanted to play with them a bit, at least it's faster :d
 //84x48  resolution
 
 //SHIP SETTIGNS
@@ -77,8 +77,9 @@ const int BULLETS_AMOUNT = 15;
 int bullets[BULLETS_AMOUNT][2]; //it was int bullets[BULLETS_AMOUNT][BULLETS_AMOUNT]; check if some loop doesn't make loop out of table (maybe loop will work on 10 elements but now Y is set to 2
 const int RESET_BULLET = -7;
 
-int alien_fire = -7;
-int alien_bullets[10][2];
+const int A_BULLET_V = 2;
+const int A_BULLETS_AMOUNT = 10;
+int alien_bullets[A_BULLETS_AMOUNT][2];
 
 int x_correction_l = 0;
 int correction_l_count = 0;
@@ -213,12 +214,15 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	//DRAW
 	gb.display.clear();
 	gb.display.drawBitmap(ship_x, SHIP_y, ship);
-	for (int i = 0; i < BULLETS_AMOUNT; i++){ //draw bullets
+	//draw bullets
+	for (int i = 0; i < BULLETS_AMOUNT; i++){ 
 		if (*(*(bullets + i)) != -7) 
 			gb.display.fillRect( *(*(bullets + i)), *(*(bullets + i) + 1), 2, 3);
 	}
-
-	for (int i = 0; i < ALIENS_ROWS; i++){ //Draw aliens
+	//void draw_bullets(int bullets_ammount, int bullet_table[][2])
+	
+	//Draw aliens
+	for (int i = 0; i < ALIENS_ROWS; i++){
 		for (int j = 0; j < ALIENS_AMOUNT; j++){
 			if( *(*(aliens + i)+j)){
 				switch (i){
@@ -231,9 +235,11 @@ while (gb.update()){ //returns true every 50ms; 20fps
 					case 2:
 						gb.display.drawBitmap(*(aliens_x + j), *(ALIENS_Y + i), ALIEN_3);
 						break;
-				}
-			}											
-		}
-	} //Draw aliens END
+				} //switch
+			} //if					
+		} //2 for
+	} //1 for //Draw aliens END
+} //while (gb.update()) END
 } //void loop() END
-}
+
+// FUNCTIONS

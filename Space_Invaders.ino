@@ -79,8 +79,10 @@ const int RESET_BULLET = -7;
 
 const int A_BULLET_V = 2;
 const int A_BULLETS_AMOUNT = 10;
-int alien_bullets[A_BULLETS_AMOUNT][2];
+int a_bullets[A_BULLETS_AMOUNT][2];
+void draw_bullets(const int &BULLETS_AMOUNT, int bullets_table[][2]);
 
+//correction in aliens move - while first or last column is destroyed aliens will move further - to the edge of the screen
 int x_correction_l = 0;
 int correction_l_count = 0;
 int x_correction_r = 0;
@@ -98,8 +100,11 @@ void setup(){
 	for (int i = 0; i < ALIENS_AMOUNT; i++) //set up aliens starting x position if alien_w = 8 -> 0, 9, 18, 27
 		*(aliens_x + i) = i * (alien_w + 1);
 
-	for (int i = 0; i < BULLETS_AMOUNT; i++)
+	for (int i = 0; i < BULLETS_AMOUNT; i++) // reset ship bulets
 		*(*(bullets + i)) = RESET_BULLET;
+
+	for (int i = 0; i < A_BULLETS_AMOUNT; i++) // reset alien bulets
+		*(*(a_bullets + i)) = RESET_BULLET;
 }
 
 void loop(){
@@ -115,21 +120,22 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	
 
 	//fire
-	if(gb.buttons.pressed(BTN_A)) // create bullet start coords
+	if(gb.buttons.pressed(BTN_A)){ // create bullet start coords
 		for (int i = 0; i < BULLETS_AMOUNT; i++)
 			if (*(*(bullets + i)) == RESET_BULLET){
 				*(*(bullets + i)) = ship_x + 3;
 				*(*(bullets + i) + 1) = LCDHEIGHT - 2;
 				break;
 			}
+	}
 
 	//LOGIC
 
 	//WON / LOST check if win if so go to title screen and reset some values
 	if (aliens_left <= 0 || lifes <= 0){
-		delay(2000); //wait 3 seconds to give some time to see what happened and then reset game
+		delay(1000); //wait 1 seconds to give some time to see what happened and then reset game
 		ship_x = 38;
-		lifes = 0;
+		lifes = 3;
 		direction = RIGHT;
 		aliens_left = ALIENS_AMOUNT * ALIENS_ROWS;
 
@@ -145,8 +151,11 @@ while (gb.update()){ //returns true every 50ms; 20fps
 		for (int i = 0; i < ALIENS_AMOUNT; i++) //set up aliens starting x position if alien_w = 8 -> 0, 9, 18, 27
 			*(aliens_x + i) = i * (alien_w + 1);
 
-		for (int i = 0; i < BULLETS_AMOUNT; i++)
+		for (int i = 0; i < BULLETS_AMOUNT; i++) //reset ship bullets
 			*(*(bullets + i)) = RESET_BULLET;
+
+		for (int i = 0; i < BULLETS_AMOUNT; i++) // reset alien bulets
+			*(*(a_bullets + i)) = RESET_BULLET;
 
 		gb.titleScreen(F("Space Invaders"));
 	}
@@ -214,13 +223,12 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	//DRAW
 	gb.display.clear();
 	gb.display.drawBitmap(ship_x, SHIP_y, ship);
-	//draw bullets
-	for (int i = 0; i < BULLETS_AMOUNT; i++){ 
-		if (*(*(bullets + i)) != -7) 
-			gb.display.fillRect( *(*(bullets + i)), *(*(bullets + i) + 1), 2, 3);
-	}
-	//void draw_bullets(int bullets_ammount, int bullet_table[][2])
 	
+	//draw ship bullets
+	draw_bullets(BULLETS_AMOUNT, bullets);
+	//draw aliens bullets
+	draw_bullets(A_BULLETS_AMOUNT, a_bullets);
+
 	//Draw aliens
 	for (int i = 0; i < ALIENS_ROWS; i++){
 		for (int j = 0; j < ALIENS_AMOUNT; j++){
@@ -243,3 +251,10 @@ while (gb.update()){ //returns true every 50ms; 20fps
 } //void loop() END
 
 // FUNCTIONS
+void draw_bullets(const int &BULLETS_AMOUNT, int bullets_table[][2]){
+	for (int i = 0; i < BULLETS_AMOUNT; i++){ 
+		if (*(*(bullets_table + i)) != -7) 
+			gb.display.fillRect( *(*(bullets_table + i)), *(*(bullets_table + i) + 1), 2, 3);
+	}
+
+}

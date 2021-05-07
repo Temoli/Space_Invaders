@@ -80,6 +80,7 @@ const int RESET_BULLET = -7;
 const int A_BULLET_V = 2;
 const int A_BULLETS_AMOUNT = 10;
 int a_bullets[A_BULLETS_AMOUNT][2];
+
 void draw_bullets(const int &BULLETS_AMOUNT, int bullets_table[][2]);
 
 //correction in aliens move - while first or last column is destroyed aliens will move further - to the edge of the screen
@@ -188,9 +189,9 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	}
 	//move aliens END
 
-	//move ship bullets up and/or delete bullet
+	//move ship bullets up, and/or delete bullet
 	for (int i = 0; i < BULLETS_AMOUNT; i++){
-		if ( *(*(bullets + i)) != RESET_BULLET) //move			//to do: check if  !=0 isn't wrong
+		if ( *(*(bullets + i)) != RESET_BULLET) //move
 			*(*(bullets + i) + 1) -= BULLET_V;
 
 		if ( *(*(bullets + i) + 1) < -3){ //delete bullet (it's off the screen)
@@ -198,12 +199,46 @@ while (gb.update()){ //returns true every 50ms; 20fps
 			*(*(bullets + i) + 1) = RESET_BULLET;
 		}
 	}
+	
 	//alien shoot
 	//if ( *(*(alien_bullets)) >= LCDHEIGHT) *(*(alien_bullets)) = RESET_BULLET
+	for (int i  = 0; i < A_BULLETS_AMOUNT; i++){
+		for (int j = 2; j > 0; i--){
+			int col = random(0, 8);
+			if ( ( *(*(a_bullets + i)) == RESET_BULLET ) && ( *(*(aliens + col) + j) == true )){
+				*(*(a_bullets + i)) = (col + 1) * 8 - 4;
+				*(*(a_bullets + i) + 1) = (j + 1) * 8;
+			}
+		}
+	}
+	
+	//move alien bullets
+	for (int i = 0; i < A_BULLETS_AMOUNT; i++){
+		if ( *(*(a_bullets + i)) != RESET_BULLET) //move
+			*(*(a_bullets + i) + 1) += A_BULLET_V;
+
+		if ( *(*(a_bullets + i) + 1) > LCDHEIGHT + 3){ //delete bullet (it's off the screen)
+			*(*(a_bullets + i)) = RESET_BULLET;
+			*(*(a_bullets + i) + 1) = RESET_BULLET;
+		}
+	}
 		
 
 	//collision bullet - ship
-		
+	for (int bx = 0; i < A_BULLETS_AMOUNT; i++){
+			if(gb.collideRectRect( *(*(bullets + bx)), *(*(bullets + bx) + 1), 2, 3, ship_x, SHIP_y, SHIP_W, SHIP_H){
+				ship_x = LCDWIDTH + 3;
+				lifes -= 1;
+				
+				for (int i = 0; i < A_BULLETS_AMOUNT){
+					*(*(a_bullets + i)) = RESET_BULLET;
+					*(*(a_bullets + i) + 1) = RESET_BULLET;
+				}
+				
+				delay(1000);
+				
+				ship_x = 38;					
+	}
 
 	//collision bullet - alien
 	for (int i = 0; i < ALIENS_ROWS; i++){
@@ -245,8 +280,8 @@ while (gb.update()){ //returns true every 50ms; 20fps
 						break;
 				} //switch
 			} //if					
-		} //2 for
-	} //1 for //Draw aliens END
+		} //for_2
+	} //for_1 //Draw aliens END
 } //while (gb.update()) END
 } //void loop() END
 
@@ -256,5 +291,4 @@ void draw_bullets(const int &BULLETS_AMOUNT, int bullets_table[][2]){
 		if (*(*(bullets_table + i)) != -7) 
 			gb.display.fillRect( *(*(bullets_table + i)), *(*(bullets_table + i) + 1), 2, 3);
 	}
-
 }

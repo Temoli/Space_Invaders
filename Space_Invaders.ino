@@ -5,13 +5,13 @@ Gamebuino gb;
 //I'm really sorry for this pointers, I know what I have created ... but I wanted to play with them a bit, at least it's faster :d
 //84x48  resolution
 
-//SHIP SETTIGNS
+//SHIP SETTINGS
 const int SHIP_W = 5;
 const int SHIP_H = 3;
 const int SHIP_V = 1;
 
 int ship_x = 38;
-const int SHIP_y = LCDHEIGHT - 3;
+const int SHIP_y = LCDHEIGHT - 3; 
 int lifes = 3;
 int gm = 0;
 int GM_DURATION = 2 * 20; //god mode counter, after 2s ship will be vulnerable; seconds * 20; seconds * (1000ms / 50ms); 50 because main loop works every 50ms 
@@ -22,7 +22,13 @@ B01110000,
 B11111000,
 };
 
-//ALIENS SETTIGNS
+//SHIP BULLET SETTINGS
+const int BULLET_V = 2;
+const int BULLETS_AMOUNT = 15;
+int bullets[BULLETS_AMOUNT][2];
+
+
+//ALIEN SETTINGS
 int alien_w = 8;
 int alien_h = 8;
 int alien_1_h = 8;
@@ -35,12 +41,19 @@ const int RIGHT = 2;
 int direction = RIGHT;
 
 const int ALIENS_AMOUNT = 7;
-int aliens_x[ALIENS_AMOUNT];
-// int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
 const int ALIENS_ROWS = 3;
+int aliens_x[ALIENS_AMOUNT]; //set up in settings()
+// int aliens_X[8] = {0, 9, 18, 27, 36, 45, 54, 63};
 const int ALIENS_Y[3] = {1, 10, 19};
+
 bool aliens[ALIENS_ROWS][ALIENS_AMOUNT]; //it will be true if alien exist or fale if alien is dead 
 int aliens_left = ALIENS_AMOUNT * ALIENS_ROWS;
+
+//correction in aliens move - while first or last column is destroyed aliens will move further - to the edge of the screen
+int x_correction_l = 0; //correction for the left side of the formation 
+int correction_l_count = 0; //how many columns of aliens from the left was destroyed
+int x_correction_r = 0; //correction for the right side of the formation 
+int correction_r_count = 0; //how many columns of aliens from the left was destroyed
 
 const byte ALIEN_1[] PROGMEM = {
 8, 8,
@@ -74,26 +87,20 @@ B00011000,
 B00011000,
 };
 
-//BULLET SETTINGS
-const int BULLET_V = 2;
-const int BULLETS_AMOUNT = 15;
-int bullets[BULLETS_AMOUNT][2]; //it was int bullets[BULLETS_AMOUNT][BULLETS_AMOUNT]; check if some loop doesn't make loop out of table (maybe loop will work on 10 elements but now Y is set to 2
-const int RESET_BULLET = -7;
-
+//ALIEN BULLETS SETTINGS
 const int A_BULLET_V = 2;
 const int A_BULLETS_AMOUNT = 5;
 int a_bullets[A_BULLETS_AMOUNT][2];
 
+//OTHER
+const int RESET_BULLET = -7;
+
 void draw_bullets(const int &BULLETS_AMOUNT, int bullets_table[][2]);
 void (*fun)(const int &BULLETS_AMOUNT, int bullets_table[][2]);
 
-//correction in aliens move - while first or last column is destroyed aliens will move further - to the edge of the screen
-int x_correction_l = 0;
-int correction_l_count = 0;
-int x_correction_r = 0;
-int correction_r_count = 0;
+int col = 0; //it will be used in shooting section, to randomize which alien collumn supposed to shoot
 
-int col = 0;
+
 void setup(){
 	gb.begin();
 	gb.titleScreen(F("Space_Invaders"));
@@ -118,16 +125,17 @@ void setup(){
 void loop(){
 while (gb.update()){ //returns true every 50ms; 20fps
 	//INPUT
+	//go to title screen
 	if(gb.buttons.repeat(BTN_C, 0)) gb.titleScreen(F("Space Invaders"));
 
-	//move left/right
+	//move ship left/right
 	if(gb.buttons.repeat(BTN_LEFT, 0) && ship_x > 0) //move ship
 		ship_x -= SHIP_V;
 	else if(gb.buttons.repeat(BTN_RIGHT, 0) && ship_x < LCDWIDTH - SHIP_W)
 		ship_x += SHIP_V;
 	
 
-	//fire
+	//ship fire
 	if(gb.buttons.pressed(BTN_A)){ // create bullet start coords
 		for (int i = 0; i < BULLETS_AMOUNT; i++)
 			if (*(*(bullets + i)) == RESET_BULLET){
@@ -138,15 +146,15 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	}
 
 	//LOGIC
-
-	//WON / LOST check if win if so go to title screen and reset some values
+	//win / lose; check if win if so go to title screen and reset some values
 	if (aliens_left <= 0 || lifes <= 0){
-		delay(1000); //wait 1 seconds to give some time to see what happened and then reset game
+		delay(1000); //wait 1 seconds to give some time to see what happened and then reset the game
 		ship_x = 38;
 		lifes = 3;
+		gm = 0;
+
 		direction = RIGHT;
 		aliens_left = ALIENS_AMOUNT * ALIENS_ROWS;
-		gm = 0;
 
 		x_correction_l = 0;
 		correction_l_count = 0;
@@ -195,7 +203,18 @@ while (gb.update()){ //returns true every 50ms; 20fps
 					direction = RIGHT;
 			break;
 	}
-	//move aliens END
+
+	//alien shoot
+	//if ( *(*(alien_bullets)) >= LCDHEIGHT) *(*(alien_bullets)) = RESET_BULLET
+	for (int j = 2; j >= 0; j--){
+		for (int i = 0; i < A_BULLETS_AMOUNT; i++){
+			col = random(0, ALIENS_AMOUNT);
+			if ( ( *(*(aliens + j) + col) == true ) && ( *(*(a_bullets + i)) == RESET_BULLET) ) {
+				*(*(a_bullets + i)) = *(aliens_x + col) + 4;
+				*(*(a_bullets + i) + 1) = (j + 1) * 8;
+			}
+		}
+	}
 
 	//move ship bullets up, and/or delete bullet
 	for (int i = 0; i < BULLETS_AMOUNT; i++){
@@ -208,19 +227,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 		}
 	}
 	
-	//alien shoot
-	//if ( *(*(alien_bullets)) >= LCDHEIGHT) *(*(alien_bullets)) = RESET_BULLET
-	for (int j = 2; j >= 0; j--){
-		for (int i = 0; i < A_BULLETS_AMOUNT; i++){
-			col = random(0, ALIENS_AMOUNT);
-			if ( ( *(*(aliens + j) + col) == true ) && ( *(*(a_bullets + i)) == RESET_BULLET) ) {
-				*(*(a_bullets + i)) = *(aliens_x + col) + 4;
-				*(*(a_bullets + i) + 1) = (j + 1) * 8;
-			}
-		}
-	}
-	
-	//move alien bullets and/or delete bullet
+	//move alien bullets down, and/or delete bullet
 	for (int i = 0; i < A_BULLETS_AMOUNT; i++){
 		if ( *(*(a_bullets + i)) != RESET_BULLET){
 			*(*(a_bullets + i) + 1) += A_BULLET_V;
@@ -240,6 +247,7 @@ while (gb.update()){ //returns true every 50ms; 20fps
 			if(gb.collideRectRect( *(*(a_bullets + bx)), *(*(a_bullets + bx) + 1), 2, 3, ship_x, SHIP_y, SHIP_W, SHIP_H)){
 				ship_x = LCDWIDTH + 3;
 				lifes -= 1;
+				gm = 0;
 				
 				for (int i = 0; i < A_BULLETS_AMOUNT; i++){
 					*(*(a_bullets + i)) = RESET_BULLET;
@@ -271,14 +279,16 @@ while (gb.update()){ //returns true every 50ms; 20fps
 
 	//DRAW
 	gb.display.clear();
-	gb.display.drawBitmap(ship_x, SHIP_y, ship);
 	
 	//draw ship bullets
 	(*fun) (BULLETS_AMOUNT, bullets);
 	//draw aliens bullets
 	(*fun)(A_BULLETS_AMOUNT, a_bullets);
 
-	//Draw aliens
+	//draw ship
+	gb.display.drawBitmap(ship_x, SHIP_y, ship);
+
+	//draw aliens
 	for (int i = 0; i < ALIENS_ROWS; i++){
 		for (int j = 0; j < ALIENS_AMOUNT; j++){
 			if( *(*(aliens + i)+j)){

@@ -14,7 +14,7 @@ int ship_x = 38;
 const int SHIP_y = LCDHEIGHT - 3;
 int lifes = 3;
 int gm = 0;
-int GM_DURATION = 2 * 20; //god mode counter, after 3s ship will be vulnerable; seconds * 20; seconds * (1000ms / 50ms) - 50 because main loop works every 50ms 
+int GM_DURATION = 2 * 20; //god mode counter, after 2s ship will be vulnerable; seconds * 20; seconds * (1000ms / 50ms); 50 because main loop works every 50ms 
 
 const byte ship[] PROGMEM = {8, 3,
 B00100000,
@@ -274,10 +274,8 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	gb.display.drawBitmap(ship_x, SHIP_y, ship);
 	
 	//draw ship bullets
-	// draw_bullets(BULLETS_AMOUNT, bullets);
 	(*fun) (BULLETS_AMOUNT, bullets);
 	//draw aliens bullets
-	// draw_bullets(A_BULLETS_AMOUNT, a_bullets);
 	(*fun)(A_BULLETS_AMOUNT, a_bullets);
 
 	//Draw aliens

@@ -14,7 +14,7 @@ int ship_x = 38;
 const int SHIP_y = LCDHEIGHT - 3; 
 int lifes = 3;
 int gm = 0;
-int GM_DURATION = 2 * 20; //god mode counter, after 2s ship will be vulnerable; seconds * 20; seconds * (1000ms / 50ms); 50 because main loop works every 50ms 
+const int GM_DURATION = 2 * 20; //god mode counter, after 2s ship will be vulnerable; seconds * 20; seconds * (1000ms / 50ms); 50 because main loop works every 50ms 
 
 const byte ship[] PROGMEM = {8, 3,
 B00100000,
@@ -27,6 +27,8 @@ const int BULLET_V = 2;
 const int BULLETS_AMOUNT = 15;
 int bullets[BULLETS_AMOUNT][2];
 
+const int BULLET_DELAY_DURATION = 1 * 20; //ship will be able to shot every 1s; seconds * 20; seconds * (1000ms / 50ms); 50 because main loop works every 50ms
+int bullet_delay_count = BULLET_DELAY_DURATION; //it will be better if player will be able to shoot right after the game starts; later in the code game checks if bulet_dellay_count is equals to BULLET_DELAY_DURATION and allows player to fire
 
 //ALIEN SETTINGS
 int alien_w = 8;
@@ -89,7 +91,7 @@ B00011000,
 
 //ALIEN BULLETS SETTINGS
 const int A_BULLET_V = 2;
-const int A_BULLETS_AMOUNT = 5;
+const int A_BULLETS_AMOUNT = 4;
 int a_bullets[A_BULLETS_AMOUNT][2];
 
 //OTHER
@@ -136,13 +138,19 @@ while (gb.update()){ //returns true every 50ms; 20fps
 	
 
 	//ship fire
+	if(bullet_delay_count < BULLET_DELAY_DURATION) bullet_delay_count++;
+
 	if(gb.buttons.pressed(BTN_A)){ // create bullet start coords
-		for (int i = 0; i < BULLETS_AMOUNT; i++)
-			if (*(*(bullets + i)) == RESET_BULLET){
-				*(*(bullets + i)) = ship_x + 3;
-				*(*(bullets + i) + 1) = LCDHEIGHT - 2;
-				break;
+		if(bullet_delay_count == BULLET_DELAY_DURATION){
+			bullet_delay_count = 0;
+			for (int i = 0; i < BULLETS_AMOUNT; i++){
+				if (*(*(bullets + i)) == RESET_BULLET){
+					*(*(bullets + i)) = ship_x + 3;
+					*(*(bullets + i) + 1) = LCDHEIGHT - 2;
+					break;
+				}
 			}
+		}
 	}
 
 	//LOGIC
